@@ -1,0 +1,641 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en" data-lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Team Project to Deployed SPA</title>
+<script>
+(function () {
+  var d = document.documentElement, t, l;
+  try { t = localStorage.getItem('theme'); l = localStorage.getItem('lang'); } catch (e) {}
+  if (!t) t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (!l) l = (navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+  d.setAttribute('data-theme', t);
+  d.setAttribute('data-lang', l);
+  d.lang = l === 'zh' ? 'zh-Hant' : 'en';
+})();
+</script>
+<style>
+  :root {
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#1F2937; --muted:#6B7280; --border:#E2E8F0; --soft:#F1F5F9;
+    --blue:#2563EB; --blue-bg:#EFF6FF; --blue-bd:#93C5FD;
+    --yel:#B45309;  --yel-bg:#FFFBEB;  --yel-bd:#FCD34D;
+    --red:#DC2626;  --red-bg:#FEF2F2;  --red-bd:#FCA5A5;
+    --grn:#15803D;  --grn-bg:#F0FDF4;  --grn-bd:#86EFAC;
+    --shadow:0 1px 3px rgba(15,23,42,.06);
+  }
+  [data-theme="dark"] {
+    --bg:#0F172A; --card:#1E293B; --text:#E2E8F0; --muted:#94A3B8; --border:#334155; --soft:#273449;
+    --blue:#93C5FD; --blue-bg:#172554; --blue-bd:#1D4ED8;
+    --yel:#FCD34D;  --yel-bg:#2A2110;  --yel-bd:#92400E;
+    --red:#FCA5A5;  --red-bg:#2B1215;  --red-bd:#991B1B;
+    --grn:#86EFAC;  --grn-bg:#0F2A1A;  --grn-bd:#166534;
+    --shadow:none;
+  }
+
+  /* Language switching */
+  [data-lang="en"] .zh { display:none !important; }
+  [data-lang="zh"] .en { display:none !important; }
+
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:var(--bg); color:var(--text); line-height:1.65;
+    font-family:"Segoe UI", Helvetica, Arial, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    transition:background .2s, color .2s;
+    display:flex; flex-direction:column; min-height:100vh;
+  }
+
+  /* Header */
+  .topbar {
+    position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:12px;
+    height:60px; padding:0 16px; background:var(--card); border-bottom:1px solid var(--border);
+  }
+  .brand { flex:1; font-weight:700; font-size:1.05rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .actions { display:flex; gap:8px; }
+  .icon-btn, .pill-btn {
+    border:1px solid var(--border); background:var(--card); color:var(--text);
+    border-radius:10px; height:40px; min-width:40px; padding:0 12px; font-size:1rem; cursor:pointer; font-family:inherit;
+  }
+  .icon-btn:hover, .pill-btn:hover { background:var(--soft); }
+  .pill-btn { font-weight:600; font-size:.9rem; }
+
+  /* Drawer menu */
+  .drawer {
+    position:fixed; top:0; left:0; bottom:0; width:300px; max-width:85vw; z-index:50;
+    background:var(--card); border-right:1px solid var(--border); padding:16px; overflow-y:auto;
+    transform:translateX(-100%); visibility:hidden; transition:transform .25s ease, visibility .25s;
+  }
+  .drawer.open { transform:none; visibility:visible; }
+  .overlay { position:fixed; inset:0; z-index:40; background:rgba(15,23,42,.45); display:none; }
+  .overlay.show { display:block; }
+  .drawer-head { display:flex; justify-content:space-between; align-items:center; font-weight:700; margin-bottom:12px; }
+  #menuList { list-style:none; margin:0; padding:0; }
+  #menuList a {
+    display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:4px;
+    border-radius:10px; color:var(--text); text-decoration:none; font-size:.95rem;
+  }
+  #menuList a:hover { background:var(--soft); }
+  #menuList a.current { background:var(--blue-bg); color:var(--blue); font-weight:700; }
+  #menuList .num { width:28px; height:28px; font-size:.8rem; }
+
+  /* Main */
+  main { width:100%; max-width:920px; margin:0 auto; padding:24px 16px 40px; flex:1; }
+  .page { display:none; }
+  .page.active { display:block; animation:fade .25s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  h2 { display:flex; align-items:center; gap:12px; font-size:1.55rem; margin:6px 0 4px; line-height:1.3; }
+  h3 { margin:0 0 12px; font-size:1.08rem; }
+  .num {
+    display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+    width:36px; height:36px; border-radius:50%; border:2px solid var(--muted);
+    font-size:.95rem; font-weight:700; color:var(--muted); background:var(--card);
+  }
+  .num.blue { border-color:var(--blue-bd); color:var(--blue); }
+  .num.yel  { border-color:var(--yel-bd);  color:var(--yel); }
+  .lead { color:var(--muted); margin:0 0 20px; }
+
+  .panel { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:18px; box-shadow:var(--shadow); }
+  .panel.blue { background:var(--blue-bg); border-color:var(--blue-bd); }
+  .panel.yel  { background:var(--yel-bg);  border-color:var(--yel-bd); }
+
+  /* Flow */
+  .flow { display:flex; align-items:stretch; gap:8px; }
+  .flow > .box { flex:1; }
+  .arrow { display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:1.4rem; font-weight:700; min-width:24px; }
+  .arrow.blue { color:var(--blue); } .arrow.yel { color:var(--yel); }
+
+  .box { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+  .box b { display:block; margin-bottom:4px; }
+  .box small { display:block; color:var(--muted); }
+  .box.blue { border-color:var(--blue-bd); } .box.blue b { color:var(--blue); }
+  .box.yel  { border-color:var(--yel-bd);  } .box.yel b  { color:var(--yel); }
+  .box.strong { border-width:2px; }
+  .box.grn  { background:var(--grn-bg); border-color:var(--grn-bd); } .box.grn b { color:var(--grn); }
+  .box.dim  { opacity:.6; }
+  .box.market { border-radius:999px; border:2px solid var(--yel-bd); }
+  .box.market b { color:var(--yel); font-size:1.15rem; margin:0; }
+  .box.deploy { border-radius:999px; border:2px solid var(--blue-bd); background:var(--blue-bg); }
+  .box.deploy b { color:var(--blue); font-size:1.1rem; margin:0; }
+  .box ul { text-align:left; margin:6px 0 0; padding-left:18px; font-size:.92rem; }
+
+  .grid2 { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .center { display:flex; justify-content:center; margin:12px 0; }
+  .center .box { min-width:260px; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .chip { padding:8px 16px; border-radius:999px; border:1px solid var(--red-bd); background:var(--red-bg); color:var(--red); font-weight:700; }
+  .hl { background:var(--yel-bg); color:var(--yel); border:1px solid var(--yel-bd); padding:0 6px; border-radius:6px; font-weight:700; }
+
+  .note { border-left:4px solid var(--yel-bd); background:var(--yel-bg); padding:12px 16px; border-radius:8px; margin-top:14px; }
+  .note.blue { border-left-color:var(--blue-bd); background:var(--blue-bg); }
+  .note.grn  { border-left-color:var(--grn-bd);  background:var(--grn-bg); }
+  .note a, .lead a { color:var(--blue); }
+
+  .question { text-align:center; font-style:italic; font-weight:600; font-size:1.15rem; padding:14px; border:1px solid var(--border); border-radius:999px; background:var(--card); margin-bottom:14px; }
+
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.95rem; }
+  th, td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  code { font-family:Consolas, Menlo, monospace; background:var(--soft); padding:2px 6px; border-radius:6px; font-size:.9em; }
+
+  .legend { display:flex; flex-wrap:wrap; gap:16px; font-size:.9rem; color:var(--muted); }
+  .sw { display:inline-block; width:14px; height:14px; border-radius:4px; border:1px solid; vertical-align:-2px; margin-right:6px; }
+
+  .steps { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+  .steps a {
+    display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid var(--border);
+    border-left-width:5px; border-radius:12px; background:var(--card); color:var(--text); text-decoration:none; box-shadow:var(--shadow);
+  }
+  .steps a:hover { background:var(--soft); }
+  .steps a.c-blue { border-left-color:var(--blue-bd); }
+  .steps a.c-yel  { border-left-color:var(--yel-bd); }
+  .steps a.c-gray { border-left-color:var(--muted); }
+  .steps b { display:block; }
+  .steps small { color:var(--muted); }
+
+  .lane-label { font-size:.85rem; font-weight:700; color:var(--muted); margin:4px 0 8px; }
+  .lane + .lane-label { margin-top:18px; }
+
+  /* Pager */
+  .pager {
+    display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:stretch;
+    margin-top:30px; padding-top:20px; border-top:1px solid var(--border);
+  }
+  .pg {
+    display:block; padding:12px 14px; border:1px solid var(--border); border-radius:12px;
+    background:var(--card); color:var(--text); text-decoration:none; font-weight:600; font-size:.95rem;
+  }
+  .pg small { display:block; color:var(--muted); font-weight:400; }
+  .pg:hover { border-color:var(--blue-bd); background:var(--blue-bg); }
+  .pg.next { text-align:right; }
+  .pg.empty { visibility:hidden; }
+  .totop {
+    border:1px solid var(--border); background:var(--soft); color:var(--text); border-radius:999px;
+    padding:10px 18px; font-size:.9rem; cursor:pointer; font-family:inherit; align-self:center;
+  }
+  .totop:hover { background:var(--blue-bg); border-color:var(--blue-bd); }
+
+  /* Footer */
+  .site-footer {
+    border-top:1px solid var(--border); background:var(--card); color:var(--muted);
+    text-align:center; padding:20px 16px; font-size:.88rem; line-height:1.8;
+  }
+  .site-footer b { color:var(--text); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    h2 { font-size:1.25rem; }
+    .brand { font-size:.92rem; }
+    .flow { flex-direction:column; }
+    .arrow { transform:rotate(90deg); min-height:24px; }
+    .grid3, .grid4 { grid-template-columns:1fr 1fr; }
+    .pager { grid-template-columns:1fr 1fr; }
+    .totop { grid-column:1 / -1; order:3; justify-self:center; }
+  }
+  @media (max-width: 460px) {
+    .grid2, .grid3, .grid4 { grid-template-columns:1fr; }
+    .center .box { min-width:0; width:100%; }
+    .panel { padding:16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="topbar">
+  <button id="menuBtn" class="icon-btn" aria-label="Menu" aria-controls="drawer" aria-expanded="false">☰</button>
+  <div class="brand">
+    <span class="en">From Team Project to Deployed SPA</span>
+    <span class="zh">從團隊專案到部署網頁</span>
+  </div>
+  <div class="actions">
+    <button id="langBtn" class="pill-btn" aria-label="Switch language">中文</button>
+    <button id="themeBtn" class="icon-btn" aria-label="Toggle dark / light">🌙</button>
+  </div>
+</header>
+
+<!-- ===== MENU (collapsed by default) ===== -->
+<div id="overlay" class="overlay"></div>
+<nav id="drawer" class="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <span><span class="en">Modules</span><span class="zh">單元目錄</span></span>
+    <button id="closeBtn" class="icon-btn" aria-label="Close menu">✕</button>
+  </div>
+  <ol id="menuList"></ol>
+</nav>
+
+<main id="main">
+
+  <!-- ===== OVERVIEW ===== -->
+  <section class="page" id="overview">
+    <h2><span class="num">★</span><span class="t"><span class="en">Overview: The Big Picture</span><span class="zh">總覽：整體架構</span></span></h2>
+    <p class="lead">
+      <span class="en">Class notes · 11/25. From a team project idea to a deployed single-page app, in 7 stages.</span>
+      <span class="zh">課堂筆記 · 11/25。從團隊專案構想到部署單頁應用程式，共 7 個階段。</span>
+    </p>
+
+    <div class="panel">
+      <h3><span class="en">Color legend</span><span class="zh">顏色說明</span></h3>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--blue-bg);border-color:var(--blue-bd)"></i><span class="en">Product scope &amp; analysis</span><span class="zh">產品範圍與分析</span></span>
+        <span><i class="sw" style="background:var(--yel-bg);border-color:var(--yel-bd)"></i><span class="en">Product &amp; market</span><span class="zh">產品與市場</span></span>
+        <span><i class="sw" style="background:var(--red-bg);border-color:var(--red-bd)"></i><span class="en">Quality criteria</span><span class="zh">品質標準</span></span>
+        <span><i class="sw" style="background:var(--soft);border-color:var(--muted)"></i><span class="en">Core workflow</span><span class="zh">核心流程</span></span>
+      </div>
+    </div>
+
+    <ol class="steps">
+      <li><a href="#/p1" class="c-gray"><span class="num">1</span><span><b><span class="en">Define the Product</span><span class="zh">定義產品</span></b><small>TP → BNA Agent → Website (SaaS)</small></span></a></li>
+      <li><a href="#/p2" class="c-yel"><span class="num yel">2</span><span><b><span class="en">MVP → Market</span><span class="zh">最小可行產品 → 市場</span></b><small><span class="en">Producers (supply) ↔ Consumers (demand)</span><span class="zh">生產者（供給）↔ 消費者（需求）</span></small></span></a></li>
+      <li><a href="#/p3" class="c-blue"><span class="num blue">3</span><span><b><span class="en">Analysis</span><span class="zh">分析</span></b><small><span class="en">① Separate → ② Investigate → ③ Recombine</span><span class="zh">① 拆解 → ② 探究 → ③ 重組</span></small></span></a></li>
+      <li><a href="#/p4" class="c-gray"><span class="num">4</span><span><b><span class="en">Analytical Thinking</span><span class="zh">分析性思考</span></b><small><span class="en">“Can we really solve this problem?” Effective first</span><span class="zh">「我們真的能解決這個問題嗎？」先求有效</span></small></span></a></li>
+      <li><a href="#/p5" class="c-yel"><span class="num yel">5</span><span><b><span class="en">PRD: Product Requirement Document</span><span class="zh">PRD：產品需求文件</span></b><small><span class="en">Supply · Demand · Functions · Verifications</span><span class="zh">供給 · 需求 · 功能 · 驗證</span></small></span></a></li>
+      <li><a href="#/p6" class="c-gray"><span class="num">6</span><span><b><span class="en">Critical Thinking → Contents</span><span class="zh">批判性思考 → 內容</span></b><small><span class="en">Manual workflow vs. AI agent workflow</span><span class="zh">手動流程 vs. AI 代理流程</span></small></span></a></li>
+      <li><a href="#/p7" class="c-blue"><span class="num blue">7</span><span><b><span class="en">Outputs → Deploy</span><span class="zh">產出 → 部署</span></b><small><span class="en">.md files → spa.html or .svg → Deploy SPA</span><span class="zh">.md 檔案 → spa.html 或 .svg → 部署網頁</span></small></span></a></li>
+    </ol>
+  </section>
+
+  <!-- ===== 1. DEFINE THE PRODUCT ===== -->
+  <section class="page" id="p1">
+    <h2><span class="num">1</span><span class="t"><span class="en">Define the Product</span><span class="zh">定義產品</span></span></h2>
+    <p class="lead">
+      <span class="en">What are we building, what is it built with, and how is it delivered?</span>
+      <span class="zh">我們要做什麼？用什麼來做？以什麼方式提供？</span>
+    </p>
+
+    <div class="panel">
+      <h3><span class="en">Product flow</span><span class="zh">產品流程</span></h3>
+      <div class="flow">
+        <div class="box"><b><span class="en">Team Project (TP)</span><span class="zh">團隊專案（TP）</span></b><small><span class="en">= Product: App · Software · Application</span><span class="zh">＝產品：App · 軟體 · 應用程式</span></small></div>
+        <div class="arrow">→</div>
+        <div class="box"><b><span class="en">built with BNA Agent</span><span class="zh">以 BNA Agent 製作</span></b><small><span class="en">Business News Analysis</span><span class="zh">商業新聞分析</span></small></div>
+        <div class="arrow">→</div>
+        <div class="box yel"><b><span class="en">Website → SaaS</span><span class="zh">網站 → SaaS</span></b><small><span class="en">Software as a Service</span><span class="zh">軟體即服務</span></small></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="en">Key terms</span><span class="zh">關鍵詞</span></h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th><span class="en">Term</span><span class="zh">名詞</span></th><th><span class="en">Meaning</span><span class="zh">意義</span></th></tr>
+          <tr><td><b>TP</b></td><td><span class="en">Team Project. The product we build (app / software / application).</span><span class="zh">團隊專案，即我們要開發的產品（App／軟體／應用程式）。</span></td></tr>
+          <tr><td><b>BNA Agent</b></td><td><span class="en">Business News Analysis Agent, the AI agent used to build the product.</span><span class="zh">商業新聞分析代理，用來製作產品的 AI 代理。</span></td></tr>
+          <tr><td><b>SaaS</b></td><td><span class="en">Software as a Service. Software delivered through a website, with no installation needed.</span><span class="zh">軟體即服務，透過網站提供，不需安裝。</span></td></tr>
+          <tr><td><b>MVP</b></td><td><span class="en">Minimum Viable Product. The smallest version of the product that is still useful.</span><span class="zh">最小可行產品，仍然有用的最精簡版本。</span></td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. MVP → MARKET ===== -->
+  <section class="page" id="p2">
+    <h2><span class="num yel">2</span><span class="t"><span class="en">MVP → Market</span><span class="zh">最小可行產品 → 市場</span></span></h2>
+    <p class="lead">
+      <span class="en">The MVP is released into a market where producers meet consumers.</span>
+      <span class="zh">將最小可行產品推向市場，讓生產者與消費者相遇。</span>
+    </p>
+
+    <div class="panel yel">
+      <div class="center"><div class="box blue"><b><span class="en">MVP · Minimum Viable Product</span><span class="zh">MVP · 最小可行產品</span></b></div></div>
+      <div class="center"><div class="arrow yel" style="transform:none">↓</div></div>
+      <div class="flow">
+        <div class="box yel"><b><span class="en">Producers</span><span class="zh">生產者</span></b><small><span class="en">supply</span><span class="zh">供給</span></small></div>
+        <div class="arrow yel">→</div>
+        <div class="box market"><b><span class="en">Market</span><span class="zh">市場</span></b></div>
+        <div class="arrow yel">←</div>
+        <div class="box yel"><b><span class="en">Consumers</span><span class="zh">消費者</span></b><small><span class="en">demand</span><span class="zh">需求</span></small></div>
+      </div>
+      <div class="note">
+        <span class="en">🔗 <b>Link:</b> Producers and consumers become <b>Supply</b> and <b>Demand</b> in the <a href="#/p5">PRD (Stage 5)</a>.</span>
+        <span class="zh">🔗 <b>關聯：</b>生產者與消費者，對應到 <a href="#/p5">PRD（階段 5）</a>中的<b>供給</b>與<b>需求</b>。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. ANALYSIS ===== -->
+  <section class="page" id="p3">
+    <h2><span class="num blue">3</span><span class="t"><span class="en">Analysis</span><span class="zh">分析</span></span></h2>
+    <p class="lead">
+      <span class="en">Break it down, examine it, and rebuild it.</span>
+      <span class="zh">拆解、檢視、再重建。</span>
+    </p>
+
+    <div class="panel blue">
+      <h3><span class="en">The 3-step process</span><span class="zh">三步驟流程</span></h3>
+      <div class="flow">
+        <div class="box blue">
+          <b><span class="en">① Separate</span><span class="zh">① 拆解</span></b>
+          <ul>
+            <li><span class="en">the problem</span><span class="zh">問題</span></li>
+            <li><span class="hl"><span class="en">the demand ★</span><span class="zh">需求 ★</span></span></li>
+            <li><span class="en">the question</span><span class="zh">疑問</span></li>
+          </ul>
+          <small><span class="en">→ into parts &amp; components</span><span class="zh">→ 拆成部分與元件</span></small>
+        </div>
+        <div class="arrow blue">→</div>
+        <div class="box blue">
+          <b><span class="en">② Investigate</span><span class="zh">② 探究</span></b>
+          <ul>
+            <li><span class="en">potential relationships</span><span class="zh">找出潛在關聯</span></li>
+            <li><span class="en">investigate deeply, with evidence</span><span class="zh">以證據深入探究</span></li>
+          </ul>
+        </div>
+        <div class="arrow blue">→</div>
+        <div class="box blue">
+          <b><span class="en">③ Recombine</span><span class="zh">③ 重組</span></b>
+          <ul>
+            <li><span class="en">rebuild into a clear whole</span><span class="zh">重建成清楚的整體</span></li>
+            <li><span class="en">e.g. Coggle (mind-map tool)</span><span class="zh">例：Coggle（心智圖工具）</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="en">The output must be</span><span class="zh">產出必須是</span></h3>
+      <div class="chips">
+        <span class="chip"><span class="en">1 · Systematic</span><span class="zh">1 · 系統化</span></span>
+        <span class="chip"><span class="en">2 · Structured</span><span class="zh">2 · 結構化</span></span>
+        <span class="chip"><span class="en">3 · Process-oriented</span><span class="zh">3 · 流程導向</span></span>
+      </div>
+      <div class="note">
+        <span class="en">🔗 <b>Link:</b> <span class="hl">the demand ★</span> feeds directly into the <a href="#/p5">PRD (Stage 5)</a>.</span>
+        <span class="zh">🔗 <b>關聯：</b><span class="hl">需求 ★</span> 直接成為 <a href="#/p5">PRD（階段 5）</a>的內容。</span>
+      </div>
+      <div class="note blue">
+        <span class="en">💡 These 3 steps can also describe how the <b>BNA Agent</b> handles business news: separate the news, investigate it with evidence, and recombine it into a summary. <i>(Interpretation, not written in the original note.)</i></span>
+        <span class="zh">💡 這三步驟也可以用來說明 <b>BNA Agent</b> 處理商業新聞的方式：拆解新聞、以證據探究、重組成摘要。<i>（此為詮釋，原筆記未寫明。）</i></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. ANALYTICAL THINKING ===== -->
+  <section class="page" id="p4">
+    <h2><span class="num">4</span><span class="t"><span class="en">Analytical Thinking</span><span class="zh">分析性思考</span></span></h2>
+    <p class="lead">
+      <span class="en">Check whether the problem can really be solved.</span>
+      <span class="zh">確認問題是否真的能被解決。</span>
+    </p>
+
+    <div class="panel">
+      <div class="question"><span class="en">“Can we really solve this problem?”</span><span class="zh">「我們真的能解決這個問題嗎？」</span></div>
+      <div class="grid2">
+        <div class="box grn">
+          <b><span class="en">✓ Effective: focus now</span><span class="zh">✓ 有效：現在的重點</span></b>
+          <small><span class="en">the goal / purpose is reached</span><span class="zh">達成目標／目的</span></small>
+        </div>
+        <div class="box dim">
+          <b><span class="en">✗ Efficient: not yet</span><span class="zh">✗ 效率：暫不追求</span></b>
+          <small><span class="en">less input ↓ · more output ↑</span><span class="zh">投入 ↓ · 產出 ↑</span></small>
+        </div>
+      </div>
+      <div class="note grn">
+        <span class="en">💡 First make sure the solution <b>works</b>. Optimizing efficiency comes later, which matches the MVP mindset.</span>
+        <span class="zh">💡 先確保解決方案<b>可行有效</b>，之後再追求效率，這正符合 MVP 的思維。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. PRD ===== -->
+  <section class="page" id="p5">
+    <h2><span class="num yel">5</span><span class="t"><span class="en">PRD: Product Requirement Document</span><span class="zh">PRD：產品需求文件</span></span></h2>
+    <p class="lead">
+      <span class="en">The analysis results become the product's requirements.</span>
+      <span class="zh">分析的結果轉化為產品需求。</span>
+    </p>
+
+    <div class="panel yel">
+      <h3><span class="en">What goes into a PRD</span><span class="zh">PRD 包含的內容</span></h3>
+      <div class="grid4">
+        <div class="box yel"><b><span class="en">Supply</span><span class="zh">供給</span></b><small><span class="en">← producers</span><span class="zh">← 生產者</span></small></div>
+        <div class="box yel strong"><b><span class="en">Demand ★</span><span class="zh">需求 ★</span></b><small><span class="en">← consumers + Analysis ①</span><span class="zh">← 消費者 + 分析 ①</span></small></div>
+        <div class="box yel"><b><span class="en">Functions</span><span class="zh">功能</span></b><small><span class="en">what it does</span><span class="zh">產品做什麼</span></small></div>
+        <div class="box yel"><b><span class="en">Verifications</span><span class="zh">驗證</span></b><small><span class="en">how to check it</span><span class="zh">如何檢驗</span></small></div>
+      </div>
+      <p style="text-align:center;color:var(--yel);font-weight:700;margin:10px 0 0">… <span class="en">(more to be added)</span><span class="zh">（待補充）</span></p>
+      <div class="note">
+        <span class="en">🔗 <b>Links:</b> Supply / Demand ← <a href="#/p2">Market (Stage 2)</a> · Demand ★ ← <a href="#/p3">Analysis ① (Stage 3)</a></span>
+        <span class="zh">🔗 <b>關聯：</b>供給／需求 ← <a href="#/p2">市場（階段 2）</a> · 需求 ★ ← <a href="#/p3">分析 ①（階段 3）</a></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. CRITICAL THINKING → CONTENTS ===== -->
+  <section class="page" id="p6">
+    <h2><span class="num">6</span><span class="t"><span class="en">Critical Thinking → Contents</span><span class="zh">批判性思考 → 內容</span></span></h2>
+    <p class="lead">
+      <span class="en">Critical thinking produces the contents of your documents.</span>
+      <span class="zh">批判性思考產生文件的內容。</span>
+    </p>
+
+    <div class="panel">
+      <div class="lane-label"><span class="en">A · Manual workflow</span><span class="zh">A · 個人手動流程</span></div>
+      <div class="flow lane">
+        <div class="box"><b><span class="en">In-class note</span><span class="zh">課堂筆記</span></b></div>
+        <div class="arrow">→</div>
+        <div class="box"><b><span class="en">Analysis summary</span><span class="zh">分析摘要</span></b></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>.md file</b><small><span class="en">Markdown</span><span class="zh">Markdown 格式</span></small></div>
+        <div class="arrow">→</div>
+        <div class="box"><b><span class="en">Documents</span><span class="zh">文件</span></b></div>
+      </div>
+
+      <div class="lane-label"><span class="en">B · With an AI agent</span><span class="zh">B · 使用 AI 代理</span></div>
+      <div class="flow lane">
+        <div class="box"><b><span class="en">AI agent</span><span class="zh">AI 代理</span></b></div>
+        <div class="arrow blue">→</div>
+        <div class="box blue"><b><span class="en">Discussion / Consultation</span><span class="zh">討論／諮詢</span></b></div>
+        <div class="arrow blue">→</div>
+        <div class="box blue"><b><span class="en">Analysis</span><span class="zh">分析</span></b></div>
+        <div class="arrow blue">→</div>
+        <div class="box blue"><b><span class="en">Summary</span><span class="zh">摘要</span></b></div>
+      </div>
+
+      <div class="note blue">
+        <span class="en">💡 The summaries made in Workflow B should also be <b>systematic, structured, and process-oriented</b> (see <a href="#/p3">Stage 3</a>).</span>
+        <span class="zh">💡 流程 B 產出的摘要，同樣要<b>系統化、結構化、流程導向</b>（見<a href="#/p3">階段 3</a>）。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. OUTPUTS → DEPLOY ===== -->
+  <section class="page" id="p7">
+    <h2><span class="num blue">7</span><span class="t"><span class="en">Outputs → Deploy</span><span class="zh">產出 → 部署</span></span></h2>
+    <p class="lead">
+      <span class="en">From Markdown documents to a live webpage.</span>
+      <span class="zh">從 Markdown 文件到上線的網頁。</span>
+    </p>
+
+    <div class="panel">
+      <h3><span class="en">Step 1 · Markdown files</span><span class="zh">步驟 1 · Markdown 檔案</span></h3>
+      <div class="grid3">
+        <div class="box"><b><code>KB.md</code></b><small><span class="en">Knowledge base</span><span class="zh">知識庫</span></small></div>
+        <div class="box"><b><code>PRD.md</code></b><small><span class="en">Product requirements</span><span class="zh">產品需求文件</span></small></div>
+        <div class="box"><b><code>handoff.md</code></b><small><span class="en">Handover notes</span><span class="zh">交接文件</span></small></div>
+      </div>
+
+      <div class="center"><div class="arrow" style="transform:none">↓</div></div>
+
+      <h3><span class="en">Step 2 · Web or graphic output</span><span class="zh">步驟 2 · 網頁或圖像產出</span></h3>
+      <div class="flow">
+        <div class="box"><b><code>spa.html</code></b><small><span class="en">Single Page App</span><span class="zh">單頁應用程式</span></small></div>
+        <div class="arrow" style="font-size:1rem;color:var(--blue)">OR</div>
+        <div class="box"><b><code>.svg</code></b><small><span class="en">Scalable Vector Graphics (can embed PNG / JPEG)</span><span class="zh">可縮放向量圖形（可內嵌 PNG／JPEG）</span></small></div>
+      </div>
+
+      <div class="center"><div class="arrow blue" style="transform:none">↓</div></div>
+
+      <div class="center"><div class="box deploy"><b><span class="en">Deploy SPA · 部署網頁</span><span class="zh">部署網頁 · Deploy SPA</span></b></div></div>
+    </div>
+
+    <div class="panel blue">
+      <h3><span class="en">Easy ways to deploy</span><span class="zh">簡單的部署方式</span></h3>
+      <div class="grid2">
+        <div class="box blue"><b>Netlify Drop</b><small><span class="en">Drag the folder onto app.netlify.com/drop</span><span class="zh">把資料夾拖到 app.netlify.com/drop</span></small></div>
+        <div class="box blue"><b>GitHub Pages</b><small><span class="en">Upload index.html to a repository and turn on Pages</span><span class="zh">上傳 index.html 到儲存庫並開啟 Pages</span></small></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="site-footer">
+  <div><span class="en">Architect:</span><span class="zh">架構設計：</span> <b>Prof. Shihmin Lo</b></div>
+  <div><span class="en">Version</span><span class="zh">版本</span> v1.0.0 · 2026-11-25</div>
+  <div>© 2026 Prof. Shihmin Lo. <span class="en">All rights reserved.</span><span class="zh">版權所有，保留一切權利。</span></div>
+</footer>
+
+<script>
+(function () {
+  var d = document.documentElement;
+  var pages = Array.prototype.slice.call(document.querySelectorAll('.page'));
+  var menuList = document.getElementById('menuList');
+  var drawer = document.getElementById('drawer');
+  var overlay = document.getElementById('overlay');
+  var menuBtn = document.getElementById('menuBtn');
+  var langBtn = document.getElementById('langBtn');
+  var themeBtn = document.getElementById('themeBtn');
+  var current = pages[0];
+
+  function titleHTML(p) { return p.querySelector('h2 .t').innerHTML; }
+  function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  /* Build the menu and the previous/next bar for every page */
+  pages.forEach(function (p, i) {
+    var num = p.querySelector('h2 .num');
+    var li = document.createElement('li');
+    li.innerHTML = '<a href="#/' + p.id + '" data-id="' + p.id + '"><span class="' + num.className + '">' +
+      num.textContent + '</span><span>' + titleHTML(p) + '</span></a>';
+    menuList.appendChild(li);
+
+    var prev = pages[i - 1], next = pages[i + 1];
+    var nav = document.createElement('nav');
+    nav.className = 'pager';
+    nav.innerHTML =
+      (prev ? '<a class="pg prev" href="#/' + prev.id + '"><small><span class="en">← Previous</span><span class="zh">← 上一頁</span></small>' + titleHTML(prev) + '</a>'
+            : '<span class="pg empty"></span>') +
+      '<button type="button" class="totop"><span class="en">↑ Back to top</span><span class="zh">↑ 回到頂端</span></button>' +
+      (next ? '<a class="pg next" href="#/' + next.id + '"><small><span class="en">Next →</span><span class="zh">下一頁 →</span></small>' + titleHTML(next) + '</a>'
+            : '<span class="pg empty"></span>');
+    p.appendChild(nav);
+  });
+
+  /* Menu open / close */
+  function openMenu() {
+    drawer.classList.add('open'); overlay.classList.add('show');
+    menuBtn.setAttribute('aria-expanded', 'true'); drawer.setAttribute('aria-hidden', 'false');
+  }
+  function closeMenu() {
+    drawer.classList.remove('open'); overlay.classList.remove('show');
+    menuBtn.setAttribute('aria-expanded', 'false'); drawer.setAttribute('aria-hidden', 'true');
+  }
+  menuBtn.addEventListener('click', function () { drawer.classList.contains('open') ? closeMenu() : openMenu(); });
+  document.getElementById('closeBtn').addEventListener('click', closeMenu);
+  overlay.addEventListener('click', closeMenu);
+  menuList.addEventListener('click', function (e) { if (e.target.closest('a')) closeMenu(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+
+  /* Back to top */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('.totop')) window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* Page title in the browser tab */
+  function updateTitle() {
+    var lang = d.getAttribute('data-lang');
+    var el = current.querySelector('h2 .t .' + lang);
+    var site = lang === 'zh' ? '從團隊專案到部署網頁' : 'From Team Project to Deployed SPA';
+    document.title = (el ? el.textContent + ' · ' : '') + site;
+  }
+
+  /* Routing (hash-based: works on any static host, no server setup needed) */
+  function route() {
+    var id = location.hash.replace(/^#\/?/, '');
+    var target = id && document.getElementById(id);
+    if (!target || !target.classList.contains('page')) target = pages[0];
+    current = target;
+    pages.forEach(function (p) { p.classList.toggle('active', p === target); });
+    Array.prototype.forEach.call(menuList.querySelectorAll('a'), function (a) {
+      a.classList.toggle('current', a.getAttribute('data-id') === target.id);
+    });
+    window.scrollTo(0, 0);
+    closeMenu();
+    updateTitle();
+  }
+  window.addEventListener('hashchange', route);
+
+  /* Language */
+  function setLang(l) {
+    d.setAttribute('data-lang', l);
+    d.lang = l === 'zh' ? 'zh-Hant' : 'en';
+    langBtn.textContent = l === 'zh' ? 'EN' : '中文';
+    save('lang', l);
+    updateTitle();
+  }
+  langBtn.addEventListener('click', function () { setLang(d.getAttribute('data-lang') === 'zh' ? 'en' : 'zh'); });
+
+  /* Theme */
+  function setTheme(t) {
+    d.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+    save('theme', t);
+  }
+  themeBtn.addEventListener('click', function () { setTheme(d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); });
+
+  /* Start */
+  setTheme(d.getAttribute('data-theme'));
+  setLang(d.getAttribute('data-lang'));
+  route();
+})();
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
